@@ -108,20 +108,10 @@ export default function Slider({
 
   const animateToZero = () => {
     if (animRef.current) cancelAnimationFrame(animRef.current)
-    const step = () => {
-      const current = localValueRef.current
-      const next = Math.round(current - current * 0.2)
-      if (Math.abs(next) <= 1) {
-        setLocalValue(0)
-        onChange(0)
-        animRef.current = null
-        return
-      }
-      setLocalValue(next)
-      onChange(next)
-      animRef.current = requestAnimationFrame(step)
-    }
-    animRef.current = requestAnimationFrame(step)
+    // Snap immediately to 0 on release
+    setLocalValue(0)
+    onChange(0)
+    animRef.current = null
   }
 
   // Allow mouse wheel/keyboard for accessibility

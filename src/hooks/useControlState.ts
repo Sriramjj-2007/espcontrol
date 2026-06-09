@@ -45,13 +45,41 @@ export function useControlState(options: UseControlOptions) {
     pendingRef.current = { throttle, steering }
   }, [throttle, steering])
 
+  // Auto-reset to 0,0 after 5 seconds of inactivity (no movement changes)
+  const idleTimeoutRef = useRef<number | null>(null)
+
+  const recordActivity = useCallback(() => {
+    if (idleTimeoutRef.current) {
+      clearTimeout(idleTimeoutRef.current)
+    }
+    idleTimeoutRef.current = window.setTimeout(() => {
+      // Send 0,0 after idle period (sliders already auto-return via springReturn)
+      try {
+        send('0,0')
+        lastSentRef.current = '0,0'
+      } catch {
+        /* ignore */
+      }
+    }, 5000)
+  }, [send])
+
+  useEffect(() => {
+    return () => {
+      if (idleTimeoutRef.current) {
+        clearTimeout(idleTimeoutRef.current)
+      }
+    }
+  }, [])
+
   const updateThrottle = useCallback((v: number) => {
     setThrottle(clamp(v, -100, 100))
-  }, [])
+    recordActivity()
+  }, [recordActivity])
 
   const updateSteering = useCallback((v: number) => {
     setSteering(clamp(v, -100, 100))
-  }, [])
+    recordActivity()
+  }, [recordActivity])
 
   const reset = useCallback(() => {
     setThrottle(0)
