@@ -35,6 +35,7 @@ export default function App() {
             orientation="vertical"
             value={control.throttle}
             onChange={control.updateThrottle}
+            springReturn={true}
             ariaLabel="Throttle"
           />
         </section>
