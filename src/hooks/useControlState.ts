@@ -19,16 +19,14 @@ export function useControlState(options: UseControlOptions) {
   const intervalRef = useRef<number | null>(null)
 
   useEffect(() => {
-    // transmit at up to 20Hz (every 50ms) but only when changed
+    // transmit at 20Hz (every 50ms) continuously
     intervalRef.current = window.setInterval(() => {
       const msg = `${pendingRef.current.throttle},${pendingRef.current.steering}`
-      if (msg !== lastSentRef.current) {
-        try {
-          send(msg)
-          lastSentRef.current = msg
-        } catch {
-          // ignore send errors
-        }
+      try {
+        send(msg)
+        lastSentRef.current = msg
+      } catch {
+        // ignore send errors
       }
     }, 50)
 
