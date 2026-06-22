@@ -48,6 +48,24 @@ export default function App() {
     }
   }, [])
 
+  const handleFeaturePointerDown = React.useCallback((
+    event: React.PointerEvent<HTMLButtonElement>,
+    feature: 'F1' | 'F2'
+  ) => {
+    event.preventDefault()
+    event.stopPropagation()
+    handleFeature(feature)
+  }, [handleFeature])
+
+  const handleFeatureKeyDown = React.useCallback((
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    feature: 'F1' | 'F2'
+  ) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return
+    event.preventDefault()
+    handleFeature(feature)
+  }, [handleFeature])
+
   const handleEmergency = React.useCallback(() => {
     setIsF1Active(false)
     setIsF2Active(false)
@@ -102,15 +120,19 @@ export default function App() {
             />
             <div className="feature-buttons" aria-label="Extra features">
               <button
+                type="button"
                 className={`feature-button ${isF1Active ? 'active' : ''}`}
-                onClick={() => handleFeature('F1')}
+                onPointerDown={(event) => handleFeaturePointerDown(event, 'F1')}
+                onKeyDown={(event) => handleFeatureKeyDown(event, 'F1')}
                 aria-pressed={isF1Active}
               >
                 F1
               </button>
               <button
+                type="button"
                 className={`feature-button ${isF2Active ? 'active' : ''}`}
-                onClick={() => handleFeature('F2')}
+                onPointerDown={(event) => handleFeaturePointerDown(event, 'F2')}
+                onKeyDown={(event) => handleFeatureKeyDown(event, 'F2')}
                 aria-pressed={isF2Active}
               >
                 F2
