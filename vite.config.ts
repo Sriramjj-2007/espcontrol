@@ -11,8 +11,12 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate', // Automatically updates the app when new changes are deployed
-      // includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-able-icon.png'],
+      includeAssets: ['icon.png'],
+      devOptions: {
+        enabled: true
+      },
       manifest: {
+        id: '.',
         name: 'ESP Control',
         short_name: 'ESPControl',
         description: 'ESP Remote Controller',
@@ -20,7 +24,9 @@ export default defineConfig({
         background_color: '#0b0f13',
         display: 'standalone', // Makes it feel like a native mobile/desktop app
         orientation: 'landscape',
+        scope: '.',
         start_url: '.',
+        categories: ['utilities'],
         icons: [
           {
             src: 'icon.png',

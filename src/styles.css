@@ -26,6 +26,17 @@ body{
 .value{color:var(--accent)}
 .last{margin-left:auto}
 .mono{font-family:monospace;background:rgba(255,255,255,0.02);padding:4px 8px;border-radius:6px}
+.install-button{
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:8px;
+  background:var(--accent);
+  color:white;
+  padding:8px 12px;
+  font-weight:800;
+  letter-spacing:0;
+}
+.install-button:active{transform:translateY(1px)}
+.install-button:focus-visible{outline:2px solid var(--ok);outline-offset:3px}
 
 .controller{flex:1;display:flex;align-items:stretch;gap:12px;padding:12px}
 .left,.right{flex:1;display:flex;align-items:center;justify-content:center}

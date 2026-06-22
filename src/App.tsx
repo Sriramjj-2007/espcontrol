@@ -5,11 +5,40 @@ import Slider from './components/Slider'
 import ConnectionStatus from './components/ConnectionStatus'
 import EmergencyStop from './components/EmergencyStop'
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
+
 export default function App() {
   const { status, send, lastReceived } = useWebSocket()
   const [isF1Active, setIsF1Active] = React.useState(false)
   const [isF2Active, setIsF2Active] = React.useState(false)
+  const [installPrompt, setInstallPrompt] = React.useState<BeforeInstallPromptEvent | null>(null)
   const control = useControlState({ send, f1Active: isF1Active, f2Active: isF2Active })
+
+  React.useEffect(() => {
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault()
+      setInstallPrompt(event as BeforeInstallPromptEvent)
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    }
+  }, [])
+
+  const handleInstall = React.useCallback(async () => {
+    if (!installPrompt) return
+
+    await installPrompt.prompt()
+    const choice = await installPrompt.userChoice
+    if (choice.outcome === 'accepted') {
+      setInstallPrompt(null)
+    }
+  }, [installPrompt])
 
   const handleFeature = React.useCallback((feature: 'F1' | 'F2') => {
     if (feature === 'F1') {
@@ -38,6 +67,11 @@ export default function App() {
           <div>Throttle: <span className="value">{control.throttle}</span></div>
           <div>Steering: <span className="value">{control.steering}</span></div>
         </div>
+        {installPrompt ? (
+          <button className="install-button" onClick={handleInstall}>
+            Install
+          </button>
+        ) : null}
         <div className="last">Last: <span className="mono">{'' /* placeholder for last transmitted */}</span></div>
       </header>
 
