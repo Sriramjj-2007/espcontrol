@@ -7,12 +7,24 @@ import EmergencyStop from './components/EmergencyStop'
 
 export default function App() {
   const { status, send, lastReceived } = useWebSocket()
-  const control = useControlState({ send })
+  const [isF1Active, setIsF1Active] = React.useState(false)
+  const [isF2Active, setIsF2Active] = React.useState(false)
+  const control = useControlState({ send, f1Active: isF1Active, f2Active: isF2Active })
+
+  const handleFeature = React.useCallback((feature: 'F1' | 'F2') => {
+    if (feature === 'F1') {
+      setIsF1Active((active) => !active)
+    } else {
+      setIsF2Active((active) => !active)
+    }
+  }, [])
 
   const handleEmergency = React.useCallback(() => {
+    setIsF1Active(false)
+    setIsF2Active(false)
     control.reset()
     try {
-      send('0,0')
+      send('0,0,0,0')
     } catch {
       /* ignore */
     }
@@ -46,13 +58,31 @@ export default function App() {
         </section>
 
         <section className="right">
-          <Slider
-            orientation="horizontal"
-            value={control.steering}
-            onChange={control.updateSteering}
-            springReturn={true}
-            ariaLabel="Steering"
-          />
+          <div className="steering-area">
+            <Slider
+              orientation="horizontal"
+              value={control.steering}
+              onChange={control.updateSteering}
+              springReturn={true}
+              ariaLabel="Steering"
+            />
+            <div className="feature-buttons" aria-label="Extra features">
+              <button
+                className={`feature-button ${isF1Active ? 'active' : ''}`}
+                onClick={() => handleFeature('F1')}
+                aria-pressed={isF1Active}
+              >
+                F1
+              </button>
+              <button
+                className={`feature-button ${isF2Active ? 'active' : ''}`}
+                onClick={() => handleFeature('F2')}
+                aria-pressed={isF2Active}
+              >
+                F2
+              </button>
+            </div>
+          </div>
         </section>
       </main>
     </div>

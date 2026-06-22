@@ -3,25 +3,29 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 export interface ControlState {
   throttle: number // -100..100
   steering: number // -100..100
+  f1: number // 0 or 1
+  f2: number // 0 or 1
 }
 
 interface UseControlOptions {
   send: (msg: string) => void
   sendWhenDisconnected?: boolean
+  f1Active?: boolean
+  f2Active?: boolean
 }
 
 export function useControlState(options: UseControlOptions) {
-  const { send } = options
+  const { send, f1Active = false, f2Active = false } = options
   const [throttle, setThrottle] = useState<number>(0)
   const [steering, setSteering] = useState<number>(0)
   const lastSentRef = useRef<string>('')
-  const pendingRef = useRef<ControlState>({ throttle: 0, steering: 0 })
+  const pendingRef = useRef<ControlState>({ throttle: 0, steering: 0, f1: 0, f2: 0 })
   const intervalRef = useRef<number | null>(null)
 
   useEffect(() => {
     // transmit at 20Hz (every 50ms) continuously
     intervalRef.current = window.setInterval(() => {
-      const msg = `${pendingRef.current.throttle},${pendingRef.current.steering}`
+      const msg = formatControlMessage(pendingRef.current)
       try {
         send(msg)
         lastSentRef.current = msg
@@ -40,8 +44,13 @@ export function useControlState(options: UseControlOptions) {
 
   // update pending message whenever values change
   useEffect(() => {
-    pendingRef.current = { throttle, steering }
-  }, [throttle, steering])
+    pendingRef.current = {
+      throttle,
+      steering,
+      f1: f1Active ? 1 : 0,
+      f2: f2Active ? 1 : 0
+    }
+  }, [throttle, steering, f1Active, f2Active])
 
   // Auto-reset to 0,0 after 5 seconds of inactivity (no movement changes)
   const idleTimeoutRef = useRef<number | null>(null)
@@ -51,10 +60,11 @@ export function useControlState(options: UseControlOptions) {
       clearTimeout(idleTimeoutRef.current)
     }
     idleTimeoutRef.current = window.setTimeout(() => {
-      // Send 0,0 after idle period (sliders already auto-return via springReturn)
+      // Send neutral movement after idle period while preserving feature toggles.
       try {
-        send('0,0')
-        lastSentRef.current = '0,0'
+        const msg = formatControlMessage({ ...pendingRef.current, throttle: 0, steering: 0 })
+        send(msg)
+        lastSentRef.current = msg
       } catch {
         /* ignore */
       }
@@ -82,10 +92,10 @@ export function useControlState(options: UseControlOptions) {
   const reset = useCallback(() => {
     setThrottle(0)
     setSteering(0)
-    pendingRef.current = { throttle: 0, steering: 0 }
+    pendingRef.current = { throttle: 0, steering: 0, f1: 0, f2: 0 }
     try {
-      send('0,0')
-      lastSentRef.current = '0,0'
+      send('0,0,0,0')
+      lastSentRef.current = '0,0,0,0'
     } catch {
       /* ignore */
     }
@@ -95,14 +105,14 @@ export function useControlState(options: UseControlOptions) {
   useEffect(() => {
     const handleHide = () => {
       try {
-        send('0,0')
+        send('0,0,0,0')
       } catch {
         /* ignore */
       }
     }
     const handleBeforeUnload = (ev: BeforeUnloadEvent) => {
       try {
-        send('0,0')
+        send('0,0,0,0')
       } catch {
         /* ignore */
       }
@@ -130,4 +140,8 @@ export function useControlState(options: UseControlOptions) {
 
 function clamp(v: number, a: number, b: number) {
   return Math.max(a, Math.min(b, v))
+}
+
+function formatControlMessage(state: ControlState) {
+  return `${state.throttle},${state.steering},${state.f1},${state.f2}`
 }
